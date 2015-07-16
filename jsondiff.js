@@ -2,7 +2,8 @@ goog.provide('atd.json');
 
 
 
-atd.json.diff = function(orig, update) {
+atd.json.diff = function(orig, update, opt_parentPath) {
+    var parentPath = opt_parentPath ? opt_parentPath : '';
     var patch = new Array();
     for (k in update) {
         if (!update.hasOwnProperty(k)) {
@@ -15,17 +16,21 @@ atd.json.diff = function(orig, update) {
             if (ov === uv) {
                 continue;
             } else if (Array.isArray(ov) && Array.isArray(uv)) {
-                patch = patch.concat(atd.json.diffArray_('/' + k, ov, uv));
+                patch = patch.concat(atd.json.diffArray_(ov, uv, parentPath + '/' + k));
+                continue;
+            } else if (ov !== null && typeof ov === 'object' &&
+                ov !== null && typeof ov === 'object') {
+                patch = patch.concat(atd.json.diff(ov, uv, parentPath + '/' + k));
                 continue;
             } else {
                 patchEntry['op'] = 'replace';
-                patchEntry['path'] = '/' + k;
+                patchEntry['path'] = parentPath + '/' + k;
                 patchEntry['value'] = update[k];
             }
             patch.push(patchEntry);
         } else { 
             patchEntry['op'] = 'add';
-            patchEntry['path'] = '/' + k;
+            patchEntry['path'] = parentPath + '/' + k;
             patchEntry['value'] = update[k];
             patch.push(patchEntry);
         } 
@@ -37,26 +42,28 @@ atd.json.diff = function(orig, update) {
         var patchEntry = {};
         if (typeof update[k] === "undefined") {
             patchEntry['op'] = 'remove';
-            patchEntry['path'] = '/' + k;
+            patchEntry['path'] = parentPath + '/' + k;
             patch.push(patchEntry);
         }
     }
     return patch;
 }
 
-atd.json.diffArray_ = function(parentPath, origArray, updateArray) {
+
+
+atd.json.diffArray_ = function(origArray, updateArray, opt_parentPath) {
     var patch = [];
-    for (var i = 0; i < origArray; i++) {
+    for (var i = 0; i < origArray.length; i++) {
         var patchEntry = {};
-        if (updateArray.length >= i) {
+        if (updateArray.length > i) {
             var ov = origArray[i];
             var uv = updateArray[i];
             if (ov === uv) {
                 continue;
             } else {
                 patchEntry['op'] = 'replace';
-                patchEntry['path'] = parentPath + '/' + i;
-                patchEntry['value'] = update[i];
+                patchEntry['path'] = opt_parentPath + '/' + i;
+                patchEntry['value'] = updateArray[i];
                 patch.push(patchEntry);
             }
         }
@@ -65,7 +72,7 @@ atd.json.diffArray_ = function(parentPath, origArray, updateArray) {
         for (var i = updateArray.length - origArray.length; i < updateArray.length; i++) {
             patchEntry = {};
             patchEntry['op'] = 'add';
-            patchEntry['path'] = parentPath + '/' + i;
+            patchEntry['path'] = opt_parentPath + '/' + i;
             patchEntry['value'] = updateArray[i];
             patch.push(patchEntry);
         }
@@ -74,7 +81,7 @@ atd.json.diffArray_ = function(parentPath, origArray, updateArray) {
         for (var i = origArray.length - updateArray.length; i < origArray.length; i++) {
             patchEntry = {};
             patchEntry['op'] = 'remove';
-            patchEntry['path'] = parentPath + '/' + i;
+            patchEntry['path'] = opt_parentPath + '/' + i;
             patch.push(patchEntry);
         }
     }

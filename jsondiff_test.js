@@ -63,6 +63,57 @@ function testAddArrayElement() {
     assertPatchMatches([{ "op": "add", "path": "/foo/1", "value": "qux" }], patch);
 }
 
+function testRemoveArrayElement() {
+    var orig = { "foo": ["bar", "qux"]};
+    var update = {"foo": ["bar"]};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "remove", "path": "/foo/1" }], patch);
+}
+
+function testReplaceArrayElement() {
+    var orig = { "foo": ["fug"]};
+    var update = {"foo": ["bar"]};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "replace", "path": "/foo/0", "value": "fug" }], patch);
+}
+
+
+function testAddObjectProperty() {
+    var orig = { "foo": {"bar": "qux"}};
+    var update = {"foo": {"bar":"qux", "zug":"fizz"}};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "add", "path": "/foo/zug", "value": "fizz" }], patch);
+}
+
+function testReplaceObjectProperty() {
+    var orig = { "foo": {"bar": "qux"}};
+    var update = {"foo": {"bar":"fizz"}};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "replace", "path": "/foo/bar", "value": "fizz" }], patch);
+}
+
+function testRemoveObjectProperty() {
+    var orig = { "foo": {"bar": "fizz", "zug": "qux"}};
+    var update = {"foo": {"bar":"fizz"}};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "remove", "path": "/foo/zug", "value": "fizz" }], patch);
+}
+
 function assertPatchMatches(expected, actual) {
   for (var i = 0; i < expected.length; i++) {
     var currExpected = expected[i];
