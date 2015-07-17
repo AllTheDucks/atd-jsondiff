@@ -53,6 +53,7 @@ function testSimpleRemove() {
 
 
 
+
 function testAddArrayElement() {
     var orig = { "foo": ["bar"]};
     var update = {"foo": ["bar","qux"]};
@@ -63,7 +64,7 @@ function testAddArrayElement() {
     assertPatchMatches([{ "op": "add", "path": "/foo/1", "value": "qux" }], patch);
 }
 
-function testRemoveArrayElement() {
+function testRemoveArrayElementLast() {
     var orig = { "foo": ["bar", "qux"]};
     var update = {"foo": ["bar"]};
 
@@ -71,6 +72,15 @@ function testRemoveArrayElement() {
 
     assertEquals('Patch should have 1 operation', 1, patch.length);
     assertPatchMatches([{ "op": "remove", "path": "/foo/1" }], patch);
+}
+function testRemoveArrayElementFirst() {
+    var orig = { "foo": ["bar", "qux"]};
+    var update = {"foo": ["qux"]};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "remove", "path": "/foo/0" }], patch);
 }
 
 function testReplaceArrayElement() {
@@ -113,6 +123,43 @@ function testRemoveObjectProperty() {
     assertEquals('Patch should have 1 operation', 1, patch.length);
     assertPatchMatches([{ "op": "remove", "path": "/foo/zug", "value": "fizz" }], patch);
 }
+
+
+function testSimpleSubtreesEqual() {
+    var a = { "foo": {"bar": "fizz"}};
+    var b = {"foo": {"bar":"fizz"}};
+
+    assertTrue(atd.json.subtreesEqual_(a, b));
+}
+
+function testSimpleSubtreesNotEqual() {
+    var a = { "foo": {"bar": "zug"}};
+    var b = {"foo": {"bar":"fizz"}};
+
+    assertFalse(atd.json.subtreesEqual_(a, b));
+}
+
+function testArraySubtreesEqual() {
+    var a = { "foo": [{"bar": "fizz"}]};
+    var b = {"foo": [{"bar":"fizz"}]};
+
+    assertTrue(atd.json.subtreesEqual_(a, b));
+}
+
+function testArraySubtreesNotEqual() {
+    var a = { "foo": [{"foo": "fizz"}]};
+    var b = {"foo": [{"bar":"fizz"}]};
+
+    assertFalse(atd.json.subtreesEqual_(a, b));
+}
+
+function testArraySubtreesNotEqualNull() {
+    var a = { "foo": [{"foo": null}]};
+    var b = {"foo": [{"bar":"fizz"}]};
+
+    assertFalse(atd.json.subtreesEqual_(a, b));
+}
+
 
 function assertPatchMatches(expected, actual) {
   for (var i = 0; i < expected.length; i++) {
