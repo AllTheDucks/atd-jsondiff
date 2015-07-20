@@ -46,12 +46,12 @@ atd.json.diff = function(orig, update, opt_parentPath) {
   } else {
     if (orig === update) {
       return patch;
-    } else if (orig == null || typeof orig === 'undefined') {
+    } else if (orig == null || !atd.isDef(orig)) {
       patchEntry['op'] = 'add';
       patchEntry['path'] = parentPath;
       patchEntry['value'] = update;
       patch.push(patchEntry);
-    } else if (update == null || typeof update === 'undefined') {
+    } else if (update == null || !atd.isDef(update)) {
       patchEntry['op'] = 'remove';
       patchEntry['path'] = parentPath;
       patch.push(patchEntry);
