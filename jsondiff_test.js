@@ -122,6 +122,37 @@ function testRemoveArrayObjectElement() {
     assertPatchMatches([{ "op": "remove", "path": "/foo/0"}], patch);
 }
 
+function testRemoveMiddleArrayElement() {
+    var orig = { "foo": ["bar","fug","num","one"]};
+    var update = {"foo": ["bar","num","one"]};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "remove", "path": "/foo/1"}], patch);
+}
+
+function testSwapArrayElements() {
+    var orig = { "foo": ["bar","fug"]};
+    var update = { "foo": ["fug","bar"]};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "move", "from": "/foo/1", "to": "/foo/0"}], patch);
+}
+
+function testSwapAndInsertArrayElements() {
+    var orig = { "foo": ["bar","fug"]};
+    var update = { "foo": ["fug", "qug","bar"]};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 2 operations', 2, patch.length);
+    assertPatchMatches([{ "op": "move", "from": "/foo/1", "to": "/foo/0"},
+      { "op": "add", "path": "/foo/1", "value": "qug" }], patch);
+}
+
 function testAddObjectProperty() {
     var orig = { "foo": {"bar": "qux"}};
     var update = {"foo": {"bar":"qux", "zug":"fizz"}};
@@ -196,5 +227,7 @@ function assertPatchMatches(expected, actual) {
     assertEquals("op doesn't match", currExpected.op, currActual.op);
     assertEquals("path doesn't match", currExpected.path, currActual.path);
     assertEquals("value doesn't match", currExpected.path, currActual.path);
+    assertEquals("from doesn't match", currExpected.from, currActual.from);
+    assertEquals("to doesn't match", currExpected.to, currActual.to);
   }
 }

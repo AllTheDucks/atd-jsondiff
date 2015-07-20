@@ -70,19 +70,22 @@ atd.json.diff = function(orig, update, opt_parentPath) {
 
 
 /**
- * Perform a diff on an array.
- * @private
+ * Perform a diff on an array. The performance of this method is likely
+ * to be less than optimal.
  *
  * @param {Array} origArray The Array in its original state.
  * @param {Array} updateArray The Array in its updated state.
  * @param {string=} opt_parentPath The parent path, used for recursive calls.
  *
  * @return {Array.<Object>}
+ * @private
  */
 atd.json.diffArray_ = function(origArray, updateArray, opt_parentPath) {
-  var patch = [];
+  var patch = new Array();
   var origLength = origArray.length;
   var updateLength = updateArray.length;
+
+
 
   var origLocLookup = new Array();
   var newLocLookup = new Array();
@@ -93,29 +96,77 @@ atd.json.diffArray_ = function(origArray, updateArray, opt_parentPath) {
       newLocLookup[i] = newIdx;
     }
   }
+
+  var currState = new Array();
+  for (var i = 0; i < origArray.length; i++) {
+    currState[i] = i;
+  }
+  currState.getCurrLoc = function(origLoc) {
+    for (var i = 0; i < this.length; i++) {
+      if (this[i] === origLoc) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  var delCount = 0;
   for (var i = 0; i < origLength; i++) {
     var newLoc = newLocLookup[i];
-    if (typeof newLoc === 'undefined') {
-      if (updateArray[i] && !origLocLookup[i]) {
-        patch = patch.concat(atd.json.diff(origArray[i], updateArray[i],
-            opt_parentPath + '/' + i));
-      } else {
+    if (!atd.isDef(newLoc)) {
+      if (!(atd.isDef(updateArray[i]) && !atd.isDef(origLocLookup[i]))) {
+        //remove the element
         patch = patch.concat(atd.json.diff(origArray[i], null,
             opt_parentPath + '/' + i));
+        currState.splice(i - delCount, 1);
       }
     }
   }
+
+
   for (var i = 0; i < updateLength; i++) {
     var origLoc = origLocLookup[i];
-    if (typeof origLoc === 'undefined') {
-      if (origArray[i] && !newLocLookup[i]) {
+    var newLoc = newLocLookup[origLoc];
+    if (atd.isDef(origLoc)) {
+      var currLoc = currState.getCurrLoc(origLoc);
+      if (currLoc == i) {
+        continue;
+      }
+      var patchEntry = {};
+      patchEntry['op'] = 'move';
+      patchEntry['from'] = opt_parentPath + '/' + currLoc;
+      patchEntry['to'] = opt_parentPath + '/' + i;
+      patch.push(patchEntry);
+
+      currState.splice(currLoc, 1);
+      currState.splice(i, 0, origLoc);
+    } else {
+      if (origArray[i] && !atd.isDef(newLocLookup[i])) {
         continue;
       } else {
+        //add the element
         patch = patch.concat(atd.json.diff(null, updateArray[i],
+            opt_parentPath + '/' + i));
+        currState.splice(i, 0, 'added');
+      }
+    }
+  }
+
+
+
+  for (var i = 0; i < origLength; i++) {
+    var newLoc = newLocLookup[i];
+    if (!atd.isDef(newLoc)) {
+      if (atd.isDef(updateArray[i]) && !atd.isDef(origLocLookup[i])) {
+        // there's an element at the same index in the updated arr
+        // and the updated element is not an element that was moved.
+        // Update the element at i
+        patch = patch.concat(atd.json.diff(origArray[i], updateArray[i],
             opt_parentPath + '/' + i));
       }
     }
   }
+
 
   return patch;
 };
@@ -177,4 +228,21 @@ atd.json.subtreesEqual_ = function(valOne, valTwo) {
   }
   return valOne === valTwo;
 
-}
+};
+
+
+/**
+ * Copied from the closure library.  goog.isDef.  Copyright the closure authors.
+ *
+ * Returns true if the specified value is not undefined.
+ * WARNING: Do not use this to test if an object has a property. Use the in
+ * operator instead.
+ *
+ * @param {?} val Variable to test.
+ * @return {boolean} Whether variable is defined.
+ */
+atd.isDef = function(val) {
+  // void 0 always evaluates to undefined and hence we do not need to depend on
+  // the definition of the global variable named 'undefined'.
+  return val !== void 0;
+};
