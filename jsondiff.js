@@ -23,51 +23,84 @@ atd.json.diff = function(orig, update, opt_parentPath) {
       parentPath));
   } else if (orig !== null && typeof orig === 'object' &&
     update !== null && typeof update === 'object') {
+
+    patch = patch.concat(atd.json.diffObject_(orig, update, parentPath));
+
+  } else {
+    if (orig === update) {
+      return patch;
+    } else if (orig == null || !atd.isDef(orig)) {
+      if (typeof update === 'object') {
+        patch = patch.concat(atd.json.diffObject_(null, update,
+        parentPath));
+      } else {
+        patchEntry['op'] = 'add';
+        patchEntry['path'] = parentPath;
+        patchEntry['value'] = update;
+        patch.push(patchEntry);
+      }
+    } else if (update == null || !atd.isDef(update)) {
+      patchEntry['op'] = 'remove';
+      patchEntry['path'] = parentPath;
+      patch.push(patchEntry);
+    } else {
+      var origType = typeof orig;
+      var updType = typeof update;
+      if (origType !== updType && (
+          (origType === 'object' || Array.isArray(orig)) ||
+          (updType === 'object' || Array.isArray(update)))) {
+        patch = patch.concat(atd.json.diff(orig, null, parentPath));
+        patch = patch.concat(atd.json.diff(null, update, parentPath));
+      } else {
+        patchEntry['op'] = 'replace';
+        patchEntry['path'] = parentPath;
+        patchEntry['value'] = update;
+        patch.push(patchEntry);
+      }
+    }
+  }
+
+  return patch;
+};
+
+
+/**
+ * Perform a diff on an Object.
+ *
+ * @param {Object} orig The Object in its original state.
+ * @param {Object} update The Object in its updated state.
+ * @param {string=} opt_parentPath The parent path, used for recursive calls.
+ *
+ * @return {Array.<Object>}
+ * @private
+ */
+atd.json.diffObject_ = function(orig, update, opt_parentPath) {
+  var patch = new Array();
+  if (update) {
     for (k in update) {
 
-      if (!update.hasOwnProperty(k)) {
-        continue;
-      }
-      var ov = orig[k];
-      var uv = update[k];
+        if (!update.hasOwnProperty(k)) {
+          continue;
+        }
+        var ov = orig ? orig[k] : null;
+        var uv = update[k];
 
-      patch = patch.concat(atd.json.diff(ov, uv,
-        parentPath + '/' + k));
+        patch = patch.concat(atd.json.diff(ov, uv,
+          opt_parentPath + '/' + k));
     }
+  }
+  if (orig) {
     for (k in orig) {
       if (!orig.hasOwnProperty(k) || update[k]) {
         continue;
       }
       var ov = orig[k];
       patch = patch.concat(atd.json.diff(ov, null,
-        parentPath + '/' + k));
-    }
-
-  } else {
-    if (orig === update) {
-      return patch;
-    } else if (orig == null || !atd.isDef(orig)) {
-      patchEntry['op'] = 'add';
-      patchEntry['path'] = parentPath;
-      patchEntry['value'] = update;
-      patch.push(patchEntry);
-    } else if (update == null || !atd.isDef(update)) {
-      patchEntry['op'] = 'remove';
-      patchEntry['path'] = parentPath;
-      patch.push(patchEntry);
-    } else {
-      patchEntry['op'] = 'replace';
-      patchEntry['path'] = parentPath;
-      patchEntry['value'] = update;
-      patch.push(patchEntry);
+        opt_parentPath + '/' + k));
     }
   }
-
-
-
   return patch;
 };
-
 
 /**
  * Perform a diff on an array. The performance of this method is likely
