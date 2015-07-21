@@ -41,19 +41,10 @@ atd.json.diff = function(orig, update, opt_parentPath) {
       patchEntry['path'] = parentPath;
       patch.push(patchEntry);
     } else {
-      // var origType = typeof orig;
-      // var updType = typeof update;
-      // if (origType !== updType && (
-      //     (origType === 'object' || Array.isArray(orig)) ||
-      //     (updType === 'object' || Array.isArray(update)))) {
-      //   patch = patch.concat(atd.json.diff(orig, null, parentPath));
-      //   patch = patch.concat(atd.json.diff(null, update, parentPath));
-      // } else {
-        patchEntry['op'] = 'replace';
-        patchEntry['path'] = parentPath;
-        patchEntry['value'] = update;
-        patch.push(patchEntry);
-      // }
+      patchEntry['op'] = 'replace';
+      patchEntry['path'] = parentPath;
+      patchEntry['value'] = update;
+      patch.push(patchEntry);
     }
   }
 
@@ -256,6 +247,7 @@ atd.json.subtreesEqual_ = function(valOne, valTwo) {
     }
     return true;
   }
+
   return valOne === valTwo;
 };
 
