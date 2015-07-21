@@ -90,7 +90,7 @@ function testReplaceArrayElement() {
     var patch = atd.json.diff(orig, update);
 
     assertEquals('Patch should have 1 operation', 1, patch.length);
-    assertPatchMatches([{ "op": "replace", "path": "/foo/0", "value": "fug" }], patch);
+    assertPatchMatches([{ "op": "replace", "path": "/foo/0", "value": "bar" }], patch);
 }
 
 function testReplaceArrayObjectElement() {
@@ -187,29 +187,26 @@ function testMoveAndDeleteArrayElements() {
 
     var patch = atd.json.diff(orig, update);
 
-    assertPatchMatches([{ "op": "remove", "path": "/foo/2"},
-      { "op": "move", "from": "/foo/1", "to": "/foo/0" },
-      { "op": "move", "from": "/foo/3", "to": "/foo/1" },
-      { "op": "move", "from": "/foo/2", "to": "/foo/4" }], patch);    
+    assertPatchMatches([{"op":"remove","path":"/foo/2"},
+      {"op":"move","from":"/foo/1","to":"/foo/0"},
+      {"op":"move","from":"/foo/3","to":"/foo/1"},
+      {"op":"move","from":"/foo/3","to":"/foo/2"},
+      {"op":"move","from":"/foo/4","to":"/foo/3"}], patch);    
 }
 
-function testRemoveAddAndDeleteArrayElements() {
+function testMoveAddAndDeleteArrayElements() {
     var orig = {"foo":   ["a","b","c","d", "e","f","g","h"]};
     var update = {"foo": ["b","e","d","f", "l", "p","a","g","h"]};
 
-// ["a","b","c","d", "e","f","g","h"]
-// ["a","b","d", "e","f","g","h"]
-// ["b","a","d", "e","f","g","h"]
-// ["b","e","a", "d", "f","g","h"]
-// ["b","e","d", "f","g","h","a"]
-// ["b","e","d", "f","l","p","a","g","h"]
-
     var patch = atd.json.diff(orig, update);
 
-    assertPatchMatches([{ "op": "remove", "path": "/foo/2"},
-      { "op": "move", "from": "/foo/1", "to": "/foo/0" },
-      { "op": "move", "from": "/foo/3", "to": "/foo/1" },
-      { "op": "move", "from": "/foo/2", "to": "/foo/4" }], patch);    
+    assertPatchMatches([{"op":"remove","path":"/foo/2"},
+      {"op":"move","from":"/foo/1","to":"/foo/0"},
+      {"op":"move","from":"/foo/3","to":"/foo/1"},
+      {"op":"move","from":"/foo/3","to":"/foo/2"},
+      {"op":"move","from":"/foo/4","to":"/foo/3"},
+      {"op":"add","path":"/foo/4","value":"l"},
+      {"op":"add","path":"/foo/5","value":"p"}], patch);    
 
 }
 
@@ -241,7 +238,7 @@ function testRemoveObjectProperty() {
     var patch = atd.json.diff(orig, update);
 
     assertEquals('Patch should have 1 operation', 1, patch.length);
-    assertPatchMatches([{ "op": "remove", "path": "/foo/zug", "value": "fizz" }], patch);
+    assertPatchMatches([{ "op": "remove", "path": "/foo/zug"}], patch);
 }
 
 function testModifyArrayObject() {
@@ -259,9 +256,9 @@ function testAddArrayObject() {
 
     var patch = atd.json.diff(orig, update);
 
-    assertEquals('Patch should have 2 operation', 2, patch.length);
-    assertPatchMatches([{ "op": "add", "path": "/assessments/1/id", "value": "A2" },
-      { "op": "add", "path": "/assessments/1/name", "value": "Assignment Two" }], patch);
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "add", "path": "/assessments/1", 
+      "value": {"id":"A2","name":"Assignment Two"}}], patch);
 }
 function testRemoveArrayObject() {
     var orig = { "assessments": [{"id":"A1", "name":"Assignment One"},{"id":"A2", "name":"Assignment Two"}]};
@@ -279,9 +276,9 @@ function testAddChildObject() {
 
     var patch = atd.json.diff(orig, update);
 
-    assertEquals('Patch should have 2 operation', 2, patch.length);
-    assertPatchMatches([{ "op": "add", "path": "/person/firstName", "value": "Joe" },
-      { "op": "add", "path": "/person/lastName", "value": "Cool" }], patch);
+    assertEquals('Patch should have 1 operation', 1, patch.length);
+    assertPatchMatches([{ "op": "add", "path": "/person", 
+      "value": {"firstName":"Joe","lastName":"Cool"} }], patch);
 }
 function testModifyChildObject() {
     var orig = { "person": {"firstName":"Joe", "lastName":"Bloggs"}};
@@ -290,7 +287,7 @@ function testModifyChildObject() {
     var patch = atd.json.diff(orig, update);
 
     assertEquals('Patch should have 1 operation', 1, patch.length);
-    assertPatchMatches([{ "op": "replace", "path": "/person/lastName", "value": "Bloggs" }], patch);
+    assertPatchMatches([{ "op": "replace", "path": "/person/lastName", "value": "Cool" }], patch);
 }
 function testRemoveChildObject() {
     var orig = { "person": {"firstName":"Joe", "lastName":"Bloggs"}};
@@ -308,10 +305,9 @@ function testReplaceStringWithObject() {
 
     var patch = atd.json.diff(orig, update);
 
-    assertEquals('Patch should have 3 operation', 3, patch.length);
-    assertPatchMatches([{ "op": "remove", "path": "/name"},
-      { "op": "add", "path": "/name/first", "value":"Joe"},
-      { "op": "add", "path": "/name/last", "value": "Bloggs"}], patch);
+    var expectedPatch = [{ "op": "replace", "path": "/name", "value":{"first":"Joe","last":"Bloggs"}}];
+    assertEquals('Patch should have '+expectedPatch.length+' operations', expectedPatch.length, patch.length);
+    assertPatchMatches(expectedPatch, patch);
 }
 
 function testReplaceStringWithArray() {
@@ -320,10 +316,10 @@ function testReplaceStringWithArray() {
 
     var patch = atd.json.diff(orig, update);
 
-    assertEquals('Patch should have 3 operation', 3, patch.length);
-    assertPatchMatches([{ "op": "remove", "path": "/name"},
-      { "op": "add", "path": "/name/0", "value":"Joe"},
-      { "op": "add", "path": "/name/1", "value": "Bloggs"}], patch);
+    var expectedPatch = [{ "op": "replace", "path": "/name", "value":["Joe","Bloggs"]}];
+
+    assertEquals('Patch should have '+expectedPatch.length+' operations', expectedPatch.length, patch.length);
+    assertPatchMatches(expectedPatch, patch);
 }
 
 function testSimpleSubtreesEqual() {
@@ -370,8 +366,12 @@ function assertPatchMatches(expected, actual) {
     var currActual = actual[i];
     assertEquals("op doesn't match", currExpected.op, currActual.op);
     assertEquals("path doesn't match", currExpected.path, currActual.path);
-    assertEquals("value doesn't match", currExpected.path, currActual.path);
     assertEquals("from doesn't match", currExpected.from, currActual.from);
     assertEquals("to doesn't match", currExpected.to, currActual.to);
+    if (typeof currExpected.value === 'object' || typeof currExpected.value === 'array') {
+      assertTrue("value doesn't match", atd.json.subtreesEqual_(currExpected.value, currActual.value));
+    } else {
+      assertEquals("value doesn't match", currExpected.value, currActual.value);
+    }
   }
 }
