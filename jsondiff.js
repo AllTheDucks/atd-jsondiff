@@ -79,7 +79,7 @@ atd.json.diffObject_ = function(orig, update, opt_parentPath) {
   }
   if (orig) {
     for (k in orig) {
-      if (!orig.hasOwnProperty(k) || update[k]) {
+      if (!orig.hasOwnProperty(k) || atd.isDef(update[k])) {
         continue;
       }
       var ov = orig[k];

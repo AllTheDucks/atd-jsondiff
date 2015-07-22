@@ -210,6 +210,14 @@ function testMoveAddAndDeleteArrayElements() {
 
 }
 
+function testCompareEmptyObjectProperties() {
+    var orig = { "foo": ""};
+    var update = {"foo": ""};
+
+    var patch = atd.json.diff(orig, update);
+
+    assertEquals('Patch should have 0 operations', 0, patch.length);
+}
 
 function testAddObjectProperty() {
     var orig = { "foo": {"bar": "qux"}};
