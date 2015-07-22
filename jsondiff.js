@@ -156,7 +156,7 @@ atd.json.diffArray_ = function(origArray, updateArray, opt_parentPath) {
       var patchEntry = {};
       patchEntry['op'] = 'move';
       patchEntry['from'] = opt_parentPath + '/' + currLoc;
-      patchEntry['to'] = opt_parentPath + '/' + i;
+      patchEntry['path'] = opt_parentPath + '/' + i;
       patch.push(patchEntry);
 
       currState.splice(currLoc, 1);
