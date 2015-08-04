@@ -65,7 +65,7 @@ atd.json.diff = function(orig, update, opt_parentPath) {
 atd.json.diffObject_ = function(orig, update, opt_parentPath) {
   var patch = new Array();
   if (update) {
-    for (k in update) {
+    for (var k in update) {
 
         if (!update.hasOwnProperty(k)) {
           continue;
@@ -123,8 +123,8 @@ atd.json.diffArray_ = function(origArray, updateArray, opt_parentPath) {
     currState[i] = i;
   }
   currState.getCurrLoc = function(origLoc) {
-    for (var i = 0; i < this.length; i++) {
-      if (this[i] === origLoc) {
+    for (var i = 0; i < currState.length; i++) {
+      if (currState[i] === origLoc) {
         return i;
       }
     }
